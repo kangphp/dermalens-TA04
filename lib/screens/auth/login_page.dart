@@ -1,4 +1,5 @@
 import 'package:dermalens/screens/auth/signup_page.dart';
+import 'package:dermalens/screens/user/profile_page.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
@@ -11,6 +12,7 @@ class LoginPage extends StatelessWidget {
 
         //AppBar
         appBar: AppBar(
+          centerTitle: true,
           backgroundColor: const Color(0xFFfefeff),
           leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -100,6 +102,11 @@ class LoginPage extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         // Handle login
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const ProfilePage()),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF986A2F),
@@ -115,8 +122,8 @@ class LoginPage extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Colors.white,
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -143,7 +150,7 @@ class LoginPage extends StatelessWidget {
                       );
                     },
                     child: const Text(
-                        'Sign Up',
+                      'Sign Up',
                       style: TextStyle(
                         color: const Color(0xFF0966FF),
                       ),

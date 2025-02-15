@@ -11,6 +11,7 @@ class SignupPage extends StatelessWidget {
 
         //AppBar
         appBar: AppBar(
+          centerTitle: true,
           backgroundColor: const Color(0xFFfefeff),
           leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded),
