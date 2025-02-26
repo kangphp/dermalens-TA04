@@ -1,5 +1,5 @@
 import 'package:dermalens/screens/auth/signup_page.dart';
-import 'package:dermalens/screens/user/profile_page.dart';
+import 'package:dermalens/screens/user/dashboard_page.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
@@ -105,7 +105,7 @@ class LoginPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const ProfilePage()),
+                              builder: (context) => const DashboardPage()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
