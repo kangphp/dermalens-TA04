@@ -3,7 +3,7 @@ import 'package:dermalens/screens/user/dashboard_page.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +152,7 @@ class LoginPage extends StatelessWidget {
                     child: const Text(
                       'Sign Up',
                       style: TextStyle(
-                        color: const Color(0xFF0966FF),
+                        color: Color(0xFF0966FF),
                       ),
                     ),
                   ),

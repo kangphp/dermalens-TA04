@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'edit_profile_page.dart'; // Import halaman edit profile
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -75,11 +75,11 @@ class ProfilePage extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundColor: const Color(0xFF986A2F),
+            radius: 48,
             child: const Text(
               'AH',
               style: TextStyle(fontSize: 24, color: Colors.white),
             ),
-            radius: 48,
           ),
           Positioned(
             bottom: 0,

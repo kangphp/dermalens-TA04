@@ -2,7 +2,7 @@ import 'package:dermalens/screens/auth/login_page.dart';
 import 'package:flutter/material.dart';
 
 class SignupPage extends StatelessWidget {
-  const SignupPage({Key? key}) : super(key: key);
+  const SignupPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +23,12 @@ class SignupPage extends StatelessWidget {
           ),
           elevation: 0,
           title: const Text(
-              "Sign Up",
-                  style: TextStyle(
-                    color: const Color(0xFF986A2F),
-                    fontSize: 25,
-                    fontWeight: FontWeight.w600,
-                  ),
+            "Sign Up",
+            style: TextStyle(
+              color: Color(0xFF986A2F),
+              fontSize: 25,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
 
@@ -123,9 +123,7 @@ class SignupPage extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   const Text(
                     'already have an account?',
                     style: TextStyle(
@@ -135,7 +133,6 @@ class SignupPage extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-
                   TextButton(
                     style: TextButton.styleFrom(),
                     onPressed: () {
@@ -148,7 +145,7 @@ class SignupPage extends StatelessWidget {
                     child: const Text(
                       'Sign In',
                       style: TextStyle(
-                        color: const Color(0xFF0966FF),
+                        color: Color(0xFF0966FF),
                       ),
                     ),
                   ),

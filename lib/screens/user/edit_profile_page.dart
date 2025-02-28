@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../auth/login_page.dart';
 
 class EditProfilePage extends StatelessWidget {
-  const EditProfilePage({Key? key}) : super(key: key);
+  const EditProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +105,11 @@ class EditProfilePage extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundColor: const Color(0xFF986A2F),
+            radius: 48,
             child: const Text(
               'AH',
               style: TextStyle(fontSize: 24, color: Colors.white),
             ),
-            radius: 48,
           ),
         ],
       ),
