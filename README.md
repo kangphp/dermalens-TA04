@@ -161,5 +161,3 @@ MIT
 [mongodb]: <https://www.mongodb.com/>
 
 [tensorflow]: <https://www.tensorflow.org/>
-
-```
