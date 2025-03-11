@@ -47,6 +47,7 @@ DermaLens provides accurate skin assessments and tailored treatment plans.
 
 ### Project Structure
 
+```
 dermalens/
 ├── lib/
 │ ├── controllers/ # Business logic controllers
@@ -61,6 +62,7 @@ dermalens/
 │ └── widgets/ # Reusable UI components
 ├── assets/ # Images, fonts, and other static resources
 └── test/ # Unit and widget tests
+```
 
 Architecture
 DermaLens follows a clean architecture approach with a clear separation of concerns:
@@ -89,5 +91,3 @@ For any inquiries or support, please contact:
 - Website: www.dermalens.com
 
 Be the better version of you with DermaLens - Your personal skin health companion.
-
-```
