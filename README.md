@@ -1,4 +1,3 @@
-```markdown
 # DermaLens
 
 ## _Your Personal Skin Health Companion_
