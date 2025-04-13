@@ -5,10 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Ganti dengan URL API Anda
-  static const String baseUrl =
-      'http://10.0.2.2:3000/api'; // Untuk emulator Android
+  // static const String baseUrl =  'http://10.0.2.2:3000/api'; // Untuk emulator Android
   // static const String baseUrl = 'http://localhost:3000/api'; // Untuk iOS simulator
   // static const String baseUrl = 'https://your-api-url.com/api'; // Untuk produksi
+  static const String baseUrl =
+      'https://api-dermalens-ta-04-kangphps-projects.vercel.app/api'; // Untuk produksi
 
   // Headers untuk request
   static Map<String, String> _headers({String? token}) {

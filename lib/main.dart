@@ -1,19 +1,25 @@
+import 'package:dermalens/services/ml_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dermalens/providers/auth_provider.dart';
+import 'package:dermalens/providers/history_provider.dart';
 import 'package:dermalens/screens/landing_page.dart';
 import 'package:dermalens/screens/user/dashboard_page.dart';
 import 'package:dermalens/screens/splash_screen.dart';
 
-void main() {
+void main() async {
   // Pastikan binding diinisialisasi
   WidgetsFlutterBinding.ensureInitialized();
+
+  final mlService = MLService();
+  await mlService.loadModel();
 
   runApp(
     // Bungkus aplikasi dengan MultiProvider
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => HistoryProvider())
       ],
       child: const MyApp(),
     ),
