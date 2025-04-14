@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:math';
-import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
@@ -9,24 +7,24 @@ class MLService {
 
   // Daftar kondisi kulit (sesuaikan dengan model Anda)
   static const List<String> skinConditions = [
-    "Acne",
-    "Eczema",
-    "Melanoma",
-    "Normal Skin",
-    "Psoriasis",
-    "Rosacea",
-    "Tinea"
+    "Jerawat",
+    "Berminyak",
+    "Dermatitis Perioral",
+    "Kering",
+    "Normal",
+    "Penuaan",
+    "Vitiligo"
   ];
 
   // Deskripsi kondisi (dapat disesuaikan)
   static const List<String> descriptions = [
-    "Jerawat adalah kondisi kulit yang muncul ketika folikel rambut tersumbat oleh minyak dan sel kulit mati.",
-    "Eksim adalah peradangan pada kulit yang menyebabkan gatal, kemerahan, dan pengelupasan.",
-    "Melanoma adalah jenis kanker kulit yang paling berbahaya, berasal dari sel penghasil pigmen.",
-    "Kulit normal tanpa kondisi khusus yang terdeteksi.",
-    "Psoriasis adalah penyakit autoimun yang menyebabkan pembentukan plak kemerahan dan bersisik.",
-    "Rosacea adalah kondisi kulit yang menyebabkan kemerahan dan pembuluh darah yang terlihat, terutama di wajah.",
-    "Tinea adalah infeksi jamur superfisial pada kulit, rambut, atau kuku."
+    "Jerawat adalah kondisi kulit yang terjadi akibat penyumbatan pori-pori oleh minyak dan sel kulit mati, sering kali menyebabkan bintik-bintik merah atau pustula.",
+    "Kulit berminyak ditandai dengan produksi sebum berlebih yang membuat kulit tampak mengkilap, sering kali menyebabkan komedo dan jerawat.",
+    "Dermatitis perioral adalah peradangan kulit berupa ruam kemerahan di sekitar mulut, kadang menyebar ke hidung dan mata, disertai rasa gatal atau terbakar.",
+    "Kulit kering adalah kondisi kulit dengan tingkat kelembapan rendah yang menyebabkan tekstur kasar, pecah-pecah, dan mudah teriritasi.",
+    "Kulit normal memiliki keseimbangan antara kandungan air dan minyak, tidak terlalu kering atau berminyak, serta jarang mengalami masalah kulit.",
+    "Penuaan kulit ditandai dengan munculnya garis halus, kerutan, dan penurunan elastisitas akibat faktor usia atau paparan lingkungan.",
+    "Vitiligo adalah kondisi autoimun yang menyebabkan hilangnya pigmen kulit secara bertahap, menghasilkan bercak putih pada berbagai area tubuh."
   ];
 
   // Metode initialize yang akan dipanggil oleh result_page.dart

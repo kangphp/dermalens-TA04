@@ -11,14 +11,29 @@ class HistoryProvider with ChangeNotifier {
   Future<void> loadHistory() async {
     final prefs = await SharedPreferences.getInstance();
     print("DEBUG: Available keys: ${prefs.getKeys()}");
-    final historyJson = prefs.getStringList('analysis_history') ?? [];
 
-    final historyData = prefs.getStringList('analysis_history');
-    print("DEBUG: History data found: ${historyData != null}");
+    // Ambil data JSON dari SharedPreferences
+    final historyJson = prefs.getString('analysis_history') ?? '[]';
+    print("DEBUG: History JSON: $historyJson");
 
-    _history = historyJson.map((item) {
-      return AnalysisResult.fromMap(jsonDecode(item));
-    }).toList();
+    // Parsing JSON menjadi List<AnalysisResult>
+    try {
+      final historyList = jsonDecode(historyJson) as List;
+      _history = historyList
+          .map((item) {
+            try {
+              return AnalysisResult.fromMap(item as Map);
+            } catch (e) {
+              print("Error parsing item: $e");
+              return null;
+            }
+          })
+          .whereType<AnalysisResult>()
+          .toList();
+    } catch (e) {
+      print("Error parsing history JSON: $e");
+      _history = [];
+    }
 
     notifyListeners();
   }
@@ -27,11 +42,10 @@ class HistoryProvider with ChangeNotifier {
     _history.insert(0, result); // Tambahkan di awal daftar
 
     final prefs = await SharedPreferences.getInstance();
-    final historyJson = _history.map((item) {
-      return jsonEncode(item.toMap());
-    }).toList();
+    final historyJson =
+        jsonEncode(_history.map((item) => item.toMap()).toList());
 
-    await prefs.setStringList('analysis_history', historyJson);
+    await prefs.setString('analysis_history', historyJson);
     notifyListeners();
   }
 

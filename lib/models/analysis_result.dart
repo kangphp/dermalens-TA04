@@ -11,7 +11,7 @@ class AnalysisResult {
       image; // Make it nullable since we might not always have the File object
   final DateTime dateTime;
   final String description;
-  final List<String> recommendations;
+  final List<dynamic> recommendations;
 
   AnalysisResult({
     required this.id,
@@ -40,7 +40,16 @@ class AnalysisResult {
   }
 
   // Create from Map when loading from storage
-  factory AnalysisResult.fromMap(Map<String, dynamic> map) {
+  factory AnalysisResult.fromMap(Map map) {
+    var recommendationsData;
+
+    // Handle both cases: when recommendations is a string or already a list
+    if (map['recommendations'] is String) {
+      recommendationsData = jsonDecode(map['recommendations']);
+    } else {
+      recommendationsData = map['recommendations'];
+    }
+
     return AnalysisResult(
       id: map['id'],
       condition: map['condition'],
@@ -49,7 +58,7 @@ class AnalysisResult {
       imagePath: map['imagePath'],
       dateTime: DateTime.parse(map['dateTime']),
       description: map['description'],
-      recommendations: List<String>.from(jsonDecode(map['recommendations'])),
+      recommendations: recommendationsData,
     );
   }
 

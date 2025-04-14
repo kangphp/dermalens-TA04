@@ -72,7 +72,6 @@ flutter:
     - assets/images/dermalens.png
     - assets/images/images_1.jpg
     - assets/model/efficientnetb3_model_opt.tflite
-    - assets/model/labels.txt
 
   # To add assets to your application, add an assets section, like this:
   # assets:

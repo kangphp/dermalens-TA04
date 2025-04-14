@@ -21,7 +21,8 @@ class HistoryService {
         'imagePath': permanentImagePath,
         'dateTime': result.dateTime.toIso8601String(),
         'description': result.description,
-        'recommendations': result.recommendations,
+        'recommendations':
+            jsonEncode(result.recommendations), // Encode sebagai string JSON
       };
 
       // Dapatkan data history yang ada
@@ -80,10 +81,19 @@ class HistoryService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String historyJson = prefs.getString('analysis_history') ?? '[]';
-      final List<dynamic> historyList = jsonDecode(historyJson);
+      final List historyList = jsonDecode(historyJson);
 
-      return historyList.map<AnalysisResult>((item) {
-        final Map<String, dynamic> resultMap = Map<String, dynamic>.from(item);
+      return historyList.map((item) {
+        final Map resultMap = Map.from(item);
+        var recommendationsData;
+
+        // Handle both cases: when recommendations is a string or already a list
+        if (resultMap['recommendations'] is String) {
+          recommendationsData = jsonDecode(resultMap['recommendations']);
+        } else {
+          recommendationsData = resultMap['recommendations'];
+        }
+
         return AnalysisResult(
           id: resultMap['id'],
           condition: resultMap['condition'],
@@ -92,7 +102,7 @@ class HistoryService {
           imagePath: resultMap['imagePath'],
           dateTime: DateTime.parse(resultMap['dateTime']),
           description: resultMap['description'],
-          recommendations: List<String>.from(resultMap['recommendations']),
+          recommendations: recommendationsData,
         );
       }).toList();
     } catch (e) {

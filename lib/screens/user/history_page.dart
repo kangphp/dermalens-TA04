@@ -206,6 +206,24 @@ class _HistoryPageState extends State<HistoryPage> {
                                 fontSize: 14,
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              item.description, // Menampilkan deskripsi kondisi
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Rekomendasi:',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            ...item.recommendations.map(
+                                (recommendation) => Text('- $recommendation')),
                           ],
                         ),
                       ),
