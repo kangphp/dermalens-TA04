@@ -1,7 +1,7 @@
-berjerawat
-berminyak
-dermatitis_perioral
-kering
-normal
-penuaan
-vitiligo
+Berjerawat
+Berminyak
+Dermatitis Perioral
+Kering
+Normal
+Penuaan
+Vitiligo

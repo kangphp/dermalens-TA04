@@ -15,7 +15,7 @@ class MLService {
         "Jerawat adalah kondisi kulit yang terjadi akibat penyumbatan pori-pori oleh minyak dan sel kulit mati, sering kali menyebabkan bintik-bintik merah atau pustula.",
     "berminyak":
         "Kulit berminyak ditandai dengan produksi sebum berlebih yang membuat kulit tampak mengkilap, sering kali menyebabkan komedo dan jerawat.",
-    "dermatitis_perioral":
+    "dermatitis perioral":
         "Dermatitis perioral adalah peradangan kulit berupa ruam kemerahan di sekitar mulut, kadang menyebar ke hidung dan mata, disertai rasa gatal atau terbakar.",
     "kering":
         "Kulit kering adalah kondisi kulit dengan tingkat kelembapan rendah yang menyebabkan tekstur kasar, pecah-pecah, dan mudah teriritasi.",
@@ -40,48 +40,48 @@ class MLService {
     // sebelum switch, atau langsung saja seperti ini jika semua label ada di switch.
 
     switch (lowerCaseCondition) {
-      case "berjerawat": // Pastikan label ini sesuai dengan yang ada di labels.txt dan _descriptions
+      case "Berjerawat": // Pastikan label ini sesuai dengan yang ada di labels.txt dan _descriptions
         return [
           "Gunakan pembersih wajah dengan bahan aktif salicylic acid atau benzoyl peroxide.",
           "Hindari makanan berlemak dan tinggi gula.",
           "Jangan memencet jerawat untuk mencegah peradangan dan bekas.",
           "Konsultasikan dengan dokter kulit jika jerawat parah atau tidak membaik."
         ];
-      case "berminyak":
+      case "Berminyak":
         return [
           "Gunakan pembersih wajah yang lembut dan non-komedogenik.",
           "Gunakan pelembap berbahan dasar air (water-based).",
           "Gunakan kertas minyak untuk menyerap kelebihan sebum.",
           "Hindari produk berbasis minyak."
         ];
-      case "dermatitis_perioral":
+      case "Dermatitis Perioral":
         return [
           "Hentikan penggunaan krim steroid topikal jika sedang digunakan (konsultasi dokter).",
           "Gunakan pembersih yang sangat lembut dan hindari produk iritatif.",
           "Hindari pasta gigi berfluoride tinggi untuk sementara jika ruam di sekitar mulut.",
           "Konsultasikan dengan dokter untuk antibiotik topikal atau oral."
         ];
-      case "kering":
+      case "Kering":
         return [
           "Gunakan pelembap kaya emolien secara teratur, terutama setelah mandi.",
           "Hindari mandi air panas terlalu lama.",
           "Gunakan sabun yang lembut dan melembapkan.",
           "Pertimbangkan penggunaan humidifier di ruangan ber-AC."
         ];
-      case "normal":
+      case "Normal":
         return [
           "Pertahankan rutinitas perawatan kulit dengan pembersih lembut.",
           "Gunakan pelembap ringan dan sunscreen setiap hari.",
           "Lakukan eksfoliasi ringan 1-2 kali seminggu jika perlu."
         ];
-      case "penuaan":
+      case "Penuaan":
         return [
           "Gunakan produk dengan retinoid atau retinol (konsultasi untuk memulai).",
           "Gunakan sunscreen SPF 30+ setiap hari.",
           "Konsumsi antioksidan dan jaga hidrasi kulit.",
           "Pertimbangkan perawatan profesional seperti chemical peeling atau microneedling."
         ];
-      case "vitiligo":
+      case "Vitiligo":
         return [
           "Segera konsultasikan dengan dokter kulit untuk diagnosis dan pilihan terapi.",
           "Lindungi area kulit yang terkena dari paparan sinar matahari dengan sunscreen tinggi SPF.",
