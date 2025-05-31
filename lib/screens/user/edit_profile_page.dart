@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dermalens/providers/auth_provider.dart';
+import 'package:dermalens/models/user_model.dart'; // Pastikan UserModel diimpor
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -17,13 +18,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _birthDateController = TextEditingController();
 
+  String?
+      _selectedAvatarPath; // Menyimpan path avatar yang dipilih atau dari user
   bool _isLoading = false;
   String? _errorMessage;
+
+  // Daftar path ke stok avatar Anda
+  final List<String> _stockAvatars = [
+    'assets/avatars/ava_1.png',
+    'assets/avatars/ava_2.png',
+    'assets/avatars/ava_3.png',
+    'assets/avatars/ava_4.png',
+    'assets/avatars/ava_5.png',
+    'assets/avatars/ava_6.png',
+    'assets/avatars/ava_7.png',
+    'assets/avatars/ava_8.png',
+    'assets/avatars/ava_9.png',
+    'assets/avatars/ava_10.png',
+    'assets/avatars/ava_11.png',
+    'assets/avatars/ava_12.png',
+    // Pastikan path ini sesuai dengan yang ada di assets/avatars/
+    // dan file gambar placeholder ada jika Anda menggunakannya
+    // 'assets/avatars/default_placeholder.png'
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Isi form dengan data pengguna yang ada
     _loadUserData();
   }
 
@@ -33,8 +54,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _nameController.text = user.name;
       _phoneController.text = user.phone ?? '';
       _emailController.text = user.email;
-      // Tambahkan birthDate jika ada di model
-      // _birthDateController.text = user.birthDate ?? '';
+      _selectedAvatarPath = user.avatar; // Muat avatar yang tersimpan
+      // _birthDateController.text = user.birthDate ?? ''; // Jika ada
     }
   }
 
@@ -61,7 +82,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       await Provider.of<AuthProvider>(context, listen: false).updateProfile(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
-        // Tambahkan parameter lain jika diperlukan
+        avatar: _selectedAvatarPath, // Kirim path avatar yang dipilih
       );
 
       if (mounted) {
@@ -71,18 +92,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context); // Kembali ke halaman profil
+        Navigator.pop(
+            context, true); // Mengembalikan true untuk menandakan ada update
       }
     } catch (e) {
-      setState(() {
-        String errorMsg = e.toString();
-        if (errorMsg.contains('Exception:')) {
-          errorMsg = errorMsg.replaceAll('Exception:', '').trim();
-        }
-        _errorMessage = errorMsg;
-      });
-
       if (mounted) {
+        // Pastikan widget masih mounted sebelum memanggil setState
+        setState(() {
+          String errorMsg = e.toString();
+          if (errorMsg.contains('Exception:')) {
+            errorMsg = errorMsg.replaceAll('Exception:', '').trim();
+          }
+          _errorMessage = errorMsg;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_errorMessage ?? 'Failed to update profile'),
@@ -92,6 +114,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } finally {
       if (mounted) {
+        // Pastikan widget masih mounted sebelum memanggil setState
         setState(() {
           _isLoading = false;
         });
@@ -99,14 +122,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Mengakses data pengguna dari AuthProvider
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-
-    // Mendapatkan inisial nama pengguna untuk avatar
+  Widget _buildAvatarDisplay(UserModel? user) {
+    ImageProvider<Object>? backgroundImage;
     String initials = '';
+
     if (user != null && user.name.isNotEmpty) {
       final nameParts = user.name.split(' ');
       if (nameParts.isNotEmpty) {
@@ -116,25 +135,105 @@ class _EditProfilePageState extends State<EditProfilePage> {
         }
       }
       initials = initials.toUpperCase();
+    } else if (user == null && _nameController.text.isNotEmpty) {
+      // Fallback ke _nameController jika user null tapi nama sedang diisi
+      final nameParts = _nameController.text.split(' ');
+      if (nameParts.isNotEmpty) {
+        initials = nameParts[0][0];
+        if (nameParts.length > 1 && nameParts[1].isNotEmpty) {
+          initials += nameParts[1][0];
+        }
+      }
+      initials = initials.toUpperCase();
     }
+
+    if (_selectedAvatarPath != null && _selectedAvatarPath!.isNotEmpty) {
+      if (_selectedAvatarPath!.startsWith('assets/avatars/')) {
+        backgroundImage = AssetImage(_selectedAvatarPath!);
+      } else if (_selectedAvatarPath!.startsWith('http')) {
+        backgroundImage = NetworkImage(_selectedAvatarPath!);
+      }
+    }
+
+    // Jika tidak ada backgroundImage yang valid, tampilkan inisial atau placeholder
+    if (backgroundImage == null) {
+      initials =
+          initials.isEmpty ? 'U' : initials; // Default 'U' jika tidak ada nama
+    }
+
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+      backgroundImage: backgroundImage,
+      child: (backgroundImage == null)
+          ? Text(
+              initials,
+              style: TextStyle(
+                  fontSize: 40, color: Theme.of(context).primaryColor),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildAvatarSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFieldLabel('Choose Avatar'),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _stockAvatars.length,
+            itemBuilder: (context, index) {
+              final avatarPath = _stockAvatars[index];
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedAvatarPath = avatarPath;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _selectedAvatarPath == avatarPath
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey.shade300,
+                      width: _selectedAvatarPath == avatarPath ? 3 : 1,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundImage: AssetImage(avatarPath),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
 
     return Scaffold(
       backgroundColor: const Color(0xFFfefeff),
-
-      // AppBar
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: const Color(0xFFfefeff),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {},
-          ),
-        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pop(context,
+                false); // Mengembalikan false karena tidak ada update dari tombol kembali
           },
         ),
         iconTheme: const IconThemeData(
@@ -151,8 +250,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
       ),
-
-      // Body
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -161,27 +258,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
               key: _formKey,
               child: Column(
                 children: [
-                  // Profile Image
-                  _buildProfileImage(initials),
+                  // Widget untuk menampilkan avatar yang dipilih atau default
+                  _buildAvatarDisplay(user),
+                  const SizedBox(height: 16),
 
+                  // Widget untuk memilih dari stok avatar
+                  _buildAvatarSelector(),
                   const SizedBox(height: 31),
 
-                  // Error message display
                   if (_errorMessage != null)
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
                       child: Text(
                         _errorMessage!,
-                        style: TextStyle(color: Colors.red.shade800),
+                        style:
+                            TextStyle(color: Colors.red.shade700, fontSize: 14),
+                        textAlign: TextAlign.center,
                       ),
                     ),
 
-                  // Fields
                   _buildInputField('Full Name', _nameController,
                       validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -193,15 +288,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _buildInputField('Phone Number', _phoneController),
                   const SizedBox(height: 13),
                   _buildInputField(
-                    'Email', _emailController,
-                    enabled: false, // Email tidak bisa diubah
+                    'Email',
+                    _emailController,
+                    enabled: false,
                   ),
                   const SizedBox(height: 13),
-                  _buildInputField('Date of Birth', _birthDateController),
-
+                  _buildInputField('Date of Birth', _birthDateController,
+                      hintText: 'DD/MM/YYYY (Optional)'), // Contoh hintText
                   const SizedBox(height: 30),
-
-                  // Button for saving profile changes
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -242,46 +336,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  // Profile Image
-  Widget _buildProfileImage(String initials) {
-    return Center(
-      child: Stack(
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color(0xFF986A2F),
-            radius: 48,
-            child: Text(
-              initials.isEmpty ? 'U' : initials,
-              style: const TextStyle(fontSize: 24, color: Colors.white),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.brown,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.photo_camera,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Reusable input field widget
   Widget _buildInputField(
     String label,
     TextEditingController controller, {
     bool enabled = true,
     String? Function(String?)? validator,
+    String? hintText, // Tambahkan parameter hintText
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,6 +352,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           enabled: enabled,
           validator: validator,
           decoration: InputDecoration(
+            hintText: hintText, // Gunakan hintText
             border: InputBorder.none,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
@@ -299,7 +360,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: Colors.transparent),
+              borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor.withOpacity(0.5)),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
@@ -311,21 +373,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: Colors.red),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
-            labelStyle: const TextStyle(color: Colors.black),
+            labelStyle: const TextStyle(color: Colors.black54),
             filled: true,
-            fillColor: enabled
-                ? const Color(0xFFEBE2D7)
-                : const Color(
-                    0xFFE0E0E0), // Warna berbeda untuk field yang disabled
+            fillColor: enabled ? const Color(0xFFEBE2D7) : Colors.grey.shade300,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           ),
         ),
       ],
     );
   }
 
-  // Field label widget
   Widget _buildFieldLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
