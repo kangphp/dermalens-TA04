@@ -1,13 +1,15 @@
+// lib/services/ml_service.dart
 import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class MLService {
-  Interpreter? _interpreter;
-  List<String> _labels = [];
+  Interpreter? _skinAnalysisInterpreter;
+  List<String> _skinLabels = [];
 
-  // Mengubah deskripsi menjadi Map agar tidak bergantung pada urutan
+  // Dibuat private dan diakses melalui metode publik jika perlu, atau digunakan internal
   static final Map<String, String> _descriptions = {
     "berjerawat":
         "Jerawat adalah kondisi kulit yang terjadi akibat penyumbatan pori-pori oleh minyak dan sel kulit mati, sering kali menyebabkan bintik-bintik merah atau pustula.",
@@ -25,53 +27,159 @@ class MLService {
         "Vitiligo adalah kondisi autoimun yang menyebabkan hilangnya pigmen kulit secara bertahap, menghasilkan bercak putih pada berbagai area tubuh."
   };
 
-  // Metode untuk memuat model dan label, mirip dengan di kode Kotlin
+  // Metode untuk mendapatkan deskripsi, bisa dipanggil dari luar jika dibuat static public
+  static String getDescriptionForCondition(String conditionKey) {
+    return _descriptions[conditionKey.toLowerCase()] ??
+        "Deskripsi tidak tersedia.";
+  }
+
+  // Metode untuk mendapatkan rekomendasi, dipindahkan ke sini
+  static List<String> getRecommendationsForCondition(String condition) {
+    final lowerCaseCondition = condition.toLowerCase();
+    // Anda bisa menggunakan _descriptions.containsKey(lowerCaseCondition) di sini jika perlu
+    // sebelum switch, atau langsung saja seperti ini jika semua label ada di switch.
+
+    switch (lowerCaseCondition) {
+      case "berjerawat": // Pastikan label ini sesuai dengan yang ada di labels.txt dan _descriptions
+        return [
+          "Gunakan pembersih wajah dengan bahan aktif salicylic acid atau benzoyl peroxide.",
+          "Hindari makanan berlemak dan tinggi gula.",
+          "Jangan memencet jerawat untuk mencegah peradangan dan bekas.",
+          "Konsultasikan dengan dokter kulit jika jerawat parah atau tidak membaik."
+        ];
+      case "berminyak":
+        return [
+          "Gunakan pembersih wajah yang lembut dan non-komedogenik.",
+          "Gunakan pelembap berbahan dasar air (water-based).",
+          "Gunakan kertas minyak untuk menyerap kelebihan sebum.",
+          "Hindari produk berbasis minyak."
+        ];
+      case "dermatitis_perioral":
+        return [
+          "Hentikan penggunaan krim steroid topikal jika sedang digunakan (konsultasi dokter).",
+          "Gunakan pembersih yang sangat lembut dan hindari produk iritatif.",
+          "Hindari pasta gigi berfluoride tinggi untuk sementara jika ruam di sekitar mulut.",
+          "Konsultasikan dengan dokter untuk antibiotik topikal atau oral."
+        ];
+      case "kering":
+        return [
+          "Gunakan pelembap kaya emolien secara teratur, terutama setelah mandi.",
+          "Hindari mandi air panas terlalu lama.",
+          "Gunakan sabun yang lembut dan melembapkan.",
+          "Pertimbangkan penggunaan humidifier di ruangan ber-AC."
+        ];
+      case "normal":
+        return [
+          "Pertahankan rutinitas perawatan kulit dengan pembersih lembut.",
+          "Gunakan pelembap ringan dan sunscreen setiap hari.",
+          "Lakukan eksfoliasi ringan 1-2 kali seminggu jika perlu."
+        ];
+      case "penuaan":
+        return [
+          "Gunakan produk dengan retinoid atau retinol (konsultasi untuk memulai).",
+          "Gunakan sunscreen SPF 30+ setiap hari.",
+          "Konsumsi antioksidan dan jaga hidrasi kulit.",
+          "Pertimbangkan perawatan profesional seperti chemical peeling atau microneedling."
+        ];
+      case "vitiligo":
+        return [
+          "Segera konsultasikan dengan dokter kulit untuk diagnosis dan pilihan terapi.",
+          "Lindungi area kulit yang terkena dari paparan sinar matahari dengan sunscreen tinggi SPF.",
+          "Pertimbangkan penggunaan kosmetik kamuflase jika diinginkan.",
+          "Pahami bahwa ini adalah kondisi autoimun dan manajemennya berkelanjutan."
+        ];
+      // Tambahkan case lain jika ada
+      default:
+        return [
+          "Konsultasikan dengan dokter kulit untuk diagnosis dan penanganan lebih lanjut.",
+          "Jaga kebersihan dan kelembapan kulit.",
+          "Hindari penggunaan produk yang dapat mengiritasi kulit."
+        ];
+    }
+  }
+
   Future<void> initialize() async {
     try {
-      _interpreter = await Interpreter.fromAsset(
+      _skinAnalysisInterpreter = await Interpreter.fromAsset(
           'assets/model/mobilenetv3_final_model.tflite');
-      await _loadLabels(); // Memanggil fungsi untuk memuat label
-
-      print("Model and labels loaded successfully");
+      await _loadSkinLabels();
       print(
-          "Input shape: ${_interpreter!.getInputTensor(0).shape}, type: ${_interpreter!.getInputTensor(0).type}");
-      print(
-          "Output shape: ${_interpreter!.getOutputTensor(0).shape}, type: ${_interpreter!.getOutputTensor(0).type}");
+          "Skin analysis model loaded successfully. Face detection will use ML Kit.");
+      if (_skinAnalysisInterpreter != null) {
+        print(
+            "Input shape (skin): ${_skinAnalysisInterpreter!.getInputTensor(0).shape}, type: ${_skinAnalysisInterpreter!.getInputTensor(0).type}");
+        print(
+            "Output shape (skin): ${_skinAnalysisInterpreter!.getOutputTensor(0).shape}, type: ${_skinAnalysisInterpreter!.getOutputTensor(0).type}");
+      }
     } catch (e) {
       print("Error initializing ML service: $e");
       throw Exception("Failed to initialize ML service");
     }
   }
 
-  // Fungsi baru untuk memuat label dari file txt, mirip `loadLabelList` di Kotlin
-  Future<void> _loadLabels() async {
+  Future<void> _loadSkinLabels() async {
     try {
       final labelsData = await rootBundle.loadString('assets/model/labels.txt');
-      // Memisahkan setiap baris dan memfilter baris yang kosong
-      _labels = labelsData
+      _skinLabels = labelsData
           .split('\n')
           .map((label) => label.trim())
           .where((label) => label.isNotEmpty)
           .toList();
     } catch (e) {
-      print("Error loading labels: $e");
-      _labels = []; // Kosongkan jika gagal
+      print("Error loading skin labels: $e");
+      _skinLabels = [];
     }
   }
 
-  // Metode untuk menganalisis gambar
+  Future<bool> _detectFaceWithMLKit(File imageFile) async {
+    print("Attempting face detection with ML Kit...");
+    try {
+      final inputImage = InputImage.fromFilePath(imageFile.path);
+      final options = FaceDetectorOptions(
+        performanceMode: FaceDetectorMode.fast,
+      );
+      final faceDetector = FaceDetector(options: options);
+
+      final List<Face> faces = await faceDetector.processImage(inputImage);
+      await faceDetector.close();
+
+      if (faces.isNotEmpty) {
+        print("${faces.length} face(s) detected.");
+        return true;
+      } else {
+        print("No face detected.");
+        return false;
+      }
+    } catch (e) {
+      print("Error during ML Kit face detection: $e");
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> analyzeImage(File imageFile) async {
-    if (_interpreter == null || _labels.isEmpty) {
-      throw Exception("Model or labels not loaded. Call initialize() first.");
+    final bool faceDetected = await _detectFaceWithMLKit(imageFile);
+    if (!faceDetected) {
+      return {
+        'error':
+            'Wajah tidak terdeteksi pada gambar. Pastikan wajah terlihat jelas.',
+        'face_detected': false,
+      };
+    }
+
+    if (_skinAnalysisInterpreter == null || _skinLabels.isEmpty) {
+      return {
+        'error': "Model analisis kulit belum siap. Silakan coba lagi.",
+        'face_detected': true,
+      };
     }
 
     try {
-      final processedInput = await _preprocessImage(imageFile);
-      var output = List<double>.filled(1 * _labels.length, 0.0)
-          .reshape([1, _labels.length]);
+      final processedInput = await _preprocessImageForSkinAnalysis(imageFile);
+      var output = List<double>.filled(1 * _skinLabels.length, 0.0)
+          .reshape([1, _skinLabels.length]);
 
-      _interpreter!.run(processedInput, output);
-      print("Inference results: $output");
+      _skinAnalysisInterpreter!.run(processedInput, output);
+      print("Skin analysis inference results: $output");
 
       List<double> probabilities = List<double>.from(output[0]);
       int predictedClass = 0;
@@ -93,44 +201,44 @@ class MLService {
         severity = 'Rendah';
       }
 
-      // Menggunakan label yang sudah dimuat dari file
-      final predictedLabel = _labels[predictedClass];
+      final predictedLabel = _skinLabels[predictedClass];
 
       return {
+        'face_detected': true,
         'condition': predictedLabel,
         'confidence': maxConfidence,
         'severity': severity,
-        // Mengambil deskripsi dari Map berdasarkan label yang diprediksi
-        'description':
-            _descriptions[predictedLabel] ?? "Deskripsi tidak tersedia.",
+        'description': getDescriptionForCondition(
+            predictedLabel), // Memanggil metode static
+        'recommendations': getRecommendationsForCondition(
+            predictedLabel), // Memanggil metode static
         'probabilities': probabilities,
         'timestamp': DateTime.now().toIso8601String(),
         'class_index': predictedClass,
       };
     } catch (e) {
-      print("Error analyzing image: $e");
-      rethrow;
+      print("Error analyzing skin image: $e");
+      return {
+        'error':
+            'Terjadi kesalahan saat menganalisis kondisi kulit: ${e.toString()}',
+        'face_detected': true,
+      };
     }
   }
 
-  Future<List<dynamic>> _preprocessImage(File imageFile) async {
+  Future<List<dynamic>> _preprocessImageForSkinAnalysis(File imageFile) async {
     final imageBytes = await imageFile.readAsBytes();
-    final originalImage = img.decodeImage(imageBytes)!;
+    final originalImage = img.decodeImage(imageBytes);
 
     if (originalImage == null) {
-      print("--- MLService Error: Failed to decode image. ---");
-      throw Exception("Gagal memproses gambar.");
+      print(
+          "--- MLService Error: Failed to decode image for skin analysis. ---");
+      throw Exception("Gagal memproses gambar untuk analisis kulit.");
     }
 
-    // Pastikan gambar adalah RGB jika belum (ini penting jika sumber gambar bervariasi)
     img.Image rgbImage = originalImage;
-
-    final resizedImage = img.copyResize(rgbImage, // Gunakan rgbImage
-        width: 224,
-        height: 224,
-        interpolation:
-            img.Interpolation.linear // Atau bilinear jika sudah dipastikan
-        );
+    final resizedImage = img.copyResize(rgbImage,
+        width: 224, height: 224, interpolation: img.Interpolation.linear);
 
     var inputData =
         List<double>.filled(1 * 224 * 224 * 3, 0.0).reshape([1, 224, 224, 3]);
@@ -138,20 +246,17 @@ class MLService {
     for (int y = 0; y < 224; y++) {
       for (int x = 0; x < 224; x++) {
         final pixel = resizedImage.getPixel(x, y);
-
-        // PERUBAHAN UTAMA: Kirim nilai piksel [0, 255] sebagai double
-        // dan pastikan urutan channel adalah RGB
-        inputData[0][y][x][0] = pixel.r.toDouble(); // Merah
-        inputData[0][y][x][1] = pixel.g.toDouble(); // Hijau
-        inputData[0][y][x][2] = pixel.b.toDouble(); // Biru
+        inputData[0][y][x][0] = pixel.r.toDouble();
+        inputData[0][y][x][1] = pixel.g.toDouble();
+        inputData[0][y][x][2] = pixel.b.toDouble();
       }
     }
     print(
-        "--- DEBUG MLService: Input to TFLite (first pixel, [0-255] range): [${inputData[0][0][0][0].toStringAsFixed(1)}, ${inputData[0][0][0][1].toStringAsFixed(1)}, ${inputData[0][0][0][2].toStringAsFixed(1)}] ---");
+        "--- DEBUG MLService: Input to Skin TFLite (first pixel, [0-255] range): [${inputData[0][0][0][0].toStringAsFixed(1)}, ${inputData[0][0][0][1].toStringAsFixed(1)}, ${inputData[0][0][0][2].toStringAsFixed(1)}] ---");
     return inputData;
   }
 
   void close() {
-    _interpreter?.close();
+    _skinAnalysisInterpreter?.close();
   }
 }

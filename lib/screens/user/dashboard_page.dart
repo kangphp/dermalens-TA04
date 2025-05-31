@@ -1,3 +1,4 @@
+// lib/screens/user/dashboard_page.dart
 import 'dart:io';
 import 'package:dermalens/screens/user/history_page.dart';
 import 'package:flutter/material.dart';
@@ -33,200 +34,135 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       _isLoading = true;
     });
-
     try {
       await _mlService.initialize();
       setState(() {
         _modelLoaded = true;
       });
-      print("Model initialized successfully");
+      print("MLService initialized successfully on dashboard");
     } catch (e) {
-      print("Error initializing model: $e");
+      print("Error initializing MLService on dashboard: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load model: $e'),
+            content: Text('Gagal memuat model: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _processPickedImage(XFile? pickedFile) async {
+    if (pickedFile != null) {
       setState(() {
-        _isLoading = false;
+        _selectedImage = File(pickedFile.path);
       });
+      if (_modelLoaded && _selectedImage != null) {
+        _analyzeImage(_selectedImage!);
+      } else if (!_modelLoaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Model belum siap, mohon tunggu.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } else {
+      print('No image selected.');
     }
   }
 
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-
-      if (_modelLoaded) {
-        _analyzeImage(_selectedImage!);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Model is still loading. Please wait.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } else {
-      print('No image selected.');
-    }
+    await _processPickedImage(pickedFile);
   }
 
   Future<void> _pickImageFromGallery() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-
-      if (_modelLoaded) {
-        _analyzeImage(_selectedImage!);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Model is still loading. Please wait.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } else {
-      print('No image selected.');
-    }
+    await _processPickedImage(pickedFile);
   }
 
   Future<void> _analyzeImage(File image) async {
-    if (!_modelLoaded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Model is not ready yet. Please wait.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Menggunakan MLService untuk menganalisis gambar
-      final result = await _mlService.analyzeImage(image);
+      final resultData = await _mlService.analyzeImage(image);
 
-      // Membuat objek AnalysisResult dari hasil analisis
-      final analysisResult = AnalysisResult(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        condition: result['condition'],
-        confidence: result['confidence'],
-        severity: result['severity'],
-        image: image,
-        imagePath: image.path,
-        dateTime: DateTime.now(),
-        description: result['description'] ??
-            AnalysisResult.getDescriptionForCondition(result['condition']),
-        recommendations: _getRecommendations(result['condition']),
-      );
-
-      // Navigasi ke halaman detail hasil
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ResultDetailPage(result: analysisResult, image: image),
-          ),
-        );
+        if (resultData.containsKey('error')) {
+          String errorMessage = resultData['error'];
+          // bool faceWasDetected = resultData['face_detected'] ?? false; // Bisa digunakan jika perlu logika berbeda
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor:
+                  Colors.orange, // Umumnya error dari validasi atau deteksi
+            ),
+          );
+        } else {
+          // Tidak ada key 'error', berarti analisis berhasil
+          final analysisResult = AnalysisResult(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            condition: resultData['condition'] ?? 'Tidak Diketahui',
+            confidence: resultData['confidence'] ?? 0.0,
+            severity: resultData['severity'] ?? 'Tidak Diketahui',
+            image: image,
+            imagePath: image.path,
+            dateTime: resultData['timestamp'] != null
+                ? DateTime.parse(resultData['timestamp'])
+                : DateTime.now(),
+            description: resultData['description'] ??
+                MLService.getDescriptionForCondition(
+                    resultData['condition'] ?? ''),
+            recommendations: resultData['recommendations'] ??
+                MLService.getRecommendationsForCondition(
+                    resultData['condition'] ?? []),
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ResultDetailPage(result: analysisResult, image: image),
+            ),
+          );
+        }
       }
     } catch (e) {
-      print("Error analyzing image: $e");
+      print("Error in _analyzeImage (Dashboard): $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error analyzing image: $e'),
+            content: Text('Terjadi kesalahan tidak terduga: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  // Metode untuk mendapatkan rekomendasi berdasarkan kondisi
-  List<String> _getRecommendations(String condition) {
-    switch (condition) {
-      case "Acne":
-        return [
-          "Gunakan pembersih wajah dengan bahan aktif salicylic acid atau benzoyl peroxide",
-          "Hindari makanan berlemak dan tinggi gula",
-          "Jangan memencet jerawat untuk mencegah peradangan dan bekas",
-          "Konsultasikan dengan dokter kulit jika jerawat parah atau tidak membaik"
-        ];
-      case "Eczema":
-        return [
-          "Gunakan pelembab hypoallergenic secara rutin",
-          "Hindari produk berbahan keras seperti sabun dengan pewangi",
-          "Gunakan pakaian yang lembut dan tidak terlalu ketat",
-          "Konsultasikan dengan dokter untuk pengobatan topikal bila diperlukan"
-        ];
-      case "Melanoma":
-        return [
-          "Segera konsultasikan dengan dokter spesialis kulit",
-          "Lakukan biopsi untuk konfirmasi diagnosis",
-          "Lindungi kulit dari paparan sinar UV dengan sunscreen SPF 30+",
-          "Lakukan pemeriksaan kulit secara berkala untuk mendeteksi tanda-tanda baru"
-        ];
-      case "Normal Skin":
-        return [
-          "Pertahankan rutinitas perawatan kulit dengan pembersih lembut",
-          "Aplikasikan sunscreen setiap hari",
-          "Konsumsi makanan bergizi dan minum air yang cukup",
-          "Lakukan eksfoliasi ringan 1-2 kali seminggu"
-        ];
-      case "Psoriasis":
-        return [
-          "Gunakan pelembab secara teratur untuk mengurangi kekeringan dan gatal",
-          "Hindari pemicu seperti stres dan cedera pada kulit",
-          "Gunakan obat topikal yang diresepkan dokter seperti kortikosteroid",
-          "Pertimbangkan terapi cahaya (fototerapi) sesuai saran dokter"
-        ];
-      case "Rosacea":
-        return [
-          "Hindari pemicu seperti makanan pedas, alkohol, dan paparan sinar matahari",
-          "Gunakan sunscreen setiap hari untuk melindungi kulit",
-          "Pilih produk perawatan kulit yang lembut dan bebas alkohol",
-          "Konsultasikan dengan dokter untuk pengobatan dengan antibiotik topikal"
-        ];
-      case "Tinea":
-        return [
-          "Gunakan obat antijamur topikal yang dijual bebas",
-          "Jaga area yang terinfeksi tetap kering dan bersih",
-          "Hindari berbagi handuk dan pakaian dengan orang lain",
-          "Konsultasikan dengan dokter jika infeksi tidak membaik dalam 2 minggu"
-        ];
-      default:
-        return [
-          "Konsultasikan dengan dokter kulit untuk diagnosis dan penanganan lebih lanjut",
-          "Jaga kebersihan dan kelembapan kulit",
-          "Hindari penggunaan produk yang dapat mengiritasi kulit"
-        ];
-    }
-  }
+  // HAPUS _getRecommendations DARI SINI KARENA SUDAH PINDAH KE MLService
 
   void _logout() async {
+    // ... (implementasi logout tetap sama)
     try {
       await Provider.of<AuthProvider>(context, listen: false).logout();
       if (mounted) {
@@ -249,6 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ... (UI build tetap sama)
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
 
@@ -257,7 +194,6 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        // Remove back button
         title: user != null
             ? Text(
                 'Hello, ${user.name}',
@@ -304,7 +240,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Container(
+                  child: SizedBox(
                     width: double.infinity,
                     height: 180,
                     child: Image.asset(
@@ -339,7 +275,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _takePhoto,
+                    onPressed:
+                        (_isLoading || !_modelLoaded) ? null : _takePhoto,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF986A2F),
                       shape: RoundedRectangleBorder(
@@ -362,10 +299,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   width: double.infinity,
                   height: 48,
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : _pickImageFromGallery,
+                    onPressed: (_isLoading || !_modelLoaded)
+                        ? null
+                        : _pickImageFromGallery,
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                          color: _isLoading
+                          color: (_isLoading || !_modelLoaded)
                               ? const Color(0xFF986A2F).withOpacity(0.5)
                               : const Color(0xFF986A2F)),
                       shape: RoundedRectangleBorder(
