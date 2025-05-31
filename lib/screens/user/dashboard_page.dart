@@ -244,7 +244,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     width: double.infinity,
                     height: 180,
                     child: Image.asset(
-                      'assets/images/images_1.jpg',
+                      'assets/images/dashboard_image.jpg',
                       fit: BoxFit.cover,
                     ),
                   ),
