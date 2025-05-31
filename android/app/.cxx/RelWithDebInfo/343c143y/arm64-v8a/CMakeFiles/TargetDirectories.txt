@@ -1,0 +1,2 @@
+D:/1. Perkuliahan/TA-04/Implementasi/dermalens/android/app/.cxx/RelWithDebInfo/343c143y/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/1. Perkuliahan/TA-04/Implementasi/dermalens/android/app/.cxx/RelWithDebInfo/343c143y/arm64-v8a/CMakeFiles/rebuild_cache.dir

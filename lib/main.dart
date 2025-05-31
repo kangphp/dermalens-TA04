@@ -12,7 +12,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final mlService = MLService();
-  await mlService.loadModel();
+  await mlService.initialize();
 
   runApp(
     // Bungkus aplikasi dengan MultiProvider

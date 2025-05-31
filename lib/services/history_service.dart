@@ -34,7 +34,7 @@ class HistoryService {
       historyList.add(resultMap);
 
       // Simpan kembali ke SharedPreferences
-      await prefs.setString('analysis_history', jsonEncode(historyList));
+      await prefs.setString('analysis_9history', jsonEncode(historyList));
     } catch (e) {
       print('Error saving result: $e');
       throw Exception('Failed to save result to history');

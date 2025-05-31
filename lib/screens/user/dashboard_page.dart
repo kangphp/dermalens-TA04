@@ -131,7 +131,6 @@ class _DashboardPageState extends State<DashboardPage> {
         confidence: result['confidence'],
         severity: result['severity'],
         image: image,
-        // Add the image parameter
         imagePath: image.path,
         dateTime: DateTime.now(),
         description: result['description'] ??
