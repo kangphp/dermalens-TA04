@@ -91,57 +91,55 @@ class _DashboardPageState extends State<DashboardPage> {
     await _processPickedImage(pickedFile);
   }
 
+  // lib/screens/user/dashboard_page.dart
+
   Future<void> _analyzeImage(File image) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // Panggil MLService untuk mendapatkan hasil analisis dalam format Map
       final resultData = await _mlService.analyzeImage(image);
 
       if (mounted) {
         if (resultData.containsKey('error')) {
-          String errorMessage = resultData['error'];
-          // bool faceWasDetected = resultData['face_detected'] ?? false; // Bisa digunakan jika perlu logika berbeda
-
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessage),
-              backgroundColor:
-                  Colors.orange, // Umumnya error dari validasi atau deteksi
+              content: Text(resultData['error']),
+              backgroundColor: Colors.orange,
             ),
           );
         } else {
-          // Tidak ada key 'error', berarti analisis berhasil
+          // Buat objek AnalysisResult dari Map menggunakan constructor yang benar
           final analysisResult = AnalysisResult(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
-            condition: resultData['condition'] ?? 'Tidak Diketahui',
-            confidence: resultData['confidence'] ?? 0.0,
+            conditions: List<String>.from(
+                resultData['conditions'] ?? ['Tidak Diketahui']),
+            confidences:
+                Map<String, double>.from(resultData['confidences'] ?? {}),
             severity: resultData['severity'] ?? 'Tidak Diketahui',
-            image: image,
+            image: image, // Berikan File object di sini
             imagePath: image.path,
-            dateTime: resultData['timestamp'] != null
-                ? DateTime.parse(resultData['timestamp'])
-                : DateTime.now(),
-            description: resultData['description'] ??
-                MLService.getDescriptionForCondition(
-                    resultData['condition'] ?? ''),
-            recommendations: resultData['recommendations'] ??
-                MLService.getRecommendationsForCondition(
-                    resultData['condition'] ?? []),
+            dateTime: DateTime.tryParse(resultData['timestamp'] ?? '') ??
+                DateTime.now(),
+            descriptions: List<String>.from(
+                resultData['descriptions'] ?? ['Deskripsi tidak tersedia']),
+            recommendations:
+                List<String>.from(resultData['recommendations'] ?? []),
           );
 
+          // Langsung navigasi ke ResultDetailPage
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  ResultDetailPage(result: analysisResult, image: image),
+              builder: (context) => ResultDetailPage(result: analysisResult),
             ),
           );
         }
       }
     } catch (e) {
-      print("Error in _analyzeImage (Dashboard): $e");
+      debugPrint("Error in _analyzeImage (Dashboard): $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

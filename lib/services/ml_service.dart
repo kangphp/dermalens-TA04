@@ -179,19 +179,34 @@ class MLService {
           .reshape([1, _skinLabels.length]);
 
       _skinAnalysisInterpreter!.run(processedInput, output);
-      print("Skin analysis inference results: $output");
+      final List<double> probabilities = List<double>.from(output[0]);
 
-      List<double> probabilities = List<double>.from(output[0]);
-      int predictedClass = 0;
-      double maxConfidence = 0.0;
+      // --- LOGIKA BARU UNTUK MENGAMBIL TOP 2 ---
 
+      // 1. Buat daftar pasangan (indeks, probabilitas)
+      var indexedProbabilities = <(int, double)>[];
       for (int i = 0; i < probabilities.length; i++) {
-        if (probabilities[i] > maxConfidence) {
-          maxConfidence = probabilities[i];
-          predictedClass = i;
-        }
+        indexedProbabilities.add((i, probabilities[i]));
       }
 
+      // 2. Urutkan daftar berdasarkan probabilitas secara menurun (dari tertinggi ke terendah)
+      indexedProbabilities.sort((a, b) => b.$2.compareTo(a.$2));
+
+      // 3. Ambil dua hasil teratas
+      final topTwoResults = indexedProbabilities.take(2).toList();
+
+      // 4. Ekstrak informasi dari top 2 hasil
+      final List<String> detectedConditions = [];
+      final Map<String, double> confidences = {};
+
+      for (var result in topTwoResults) {
+        final condition = _skinLabels[result.$1];
+        detectedConditions.add(condition);
+        confidences[condition] = result.$2;
+      }
+
+      // 5. Tentukan tingkat keparahan berdasarkan probabilitas tertinggi
+      final double maxConfidence = topTwoResults[0].$2;
       String severity;
       if (maxConfidence > 0.8) {
         severity = 'Tinggi';
@@ -201,20 +216,24 @@ class MLService {
         severity = 'Rendah';
       }
 
-      final predictedLabel = _skinLabels[predictedClass];
+      // 6. Siapkan deskripsi dan rekomendasi untuk kedua kondisi
+      final List<String> descriptions =
+          detectedConditions.map((c) => getDescriptionForCondition(c)).toList();
 
+      final List<String> recommendations = detectedConditions
+          .expand((c) => getRecommendationsForCondition(c))
+          .toSet() // Gunakan .toSet() untuk menghindari rekomendasi duplikat
+          .toList();
+
+      // 7. Kembalikan hasil dalam format multi-label
       return {
         'face_detected': true,
-        'condition': predictedLabel,
-        'confidence': maxConfidence,
-        'severity': severity,
-        'description': getDescriptionForCondition(
-            predictedLabel), // Memanggil metode static
-        'recommendations': getRecommendationsForCondition(
-            predictedLabel), // Memanggil metode static
-        'probabilities': probabilities,
+        'conditions': detectedConditions, // Tipe: List<String>
+        'confidences': confidences, // Tipe: Map<String, double>
+        'severity': severity, // Berdasarkan kondisi utama
+        'descriptions': descriptions, // Tipe: List<String>
+        'recommendations': recommendations, // Tipe: List<String>
         'timestamp': DateTime.now().toIso8601String(),
-        'class_index': predictedClass,
       };
     } catch (e) {
       print("Error analyzing skin image: $e");
